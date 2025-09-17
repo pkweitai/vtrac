@@ -1,71 +1,65 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>S&P 500 Radar — Daily Signals</title>
-  <meta name="theme-color" content="#0fe17a">
-  <link rel="icon" href="assets/favicon.svg">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>S&P 500 Radar</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<header>
-  <div class="brand">
-    <div class="dot"></div>
-    <h1>S&amp;P 500 Radar</h1>
-  </div>
-  <div class="right">
-    <button id="themeBtn" title="Toggle theme">☾</button>
-  </div>
-</header>
+  <header class="topbar">
+    <h1>Market Radar</h1>
+    <div class="meta">
+      <span id="asOf">as of —</span>
+      <span id="intp" class="badge"></span>
+      <button id="reloadBtn" title="Reload snapshot">↻</button>
+    </div>
+  </header>
 
-<section class="toolbar">
-  <input id="q" type="search" placeholder="Search symbol or name…" autofocus>
-  <select id="sector">
-    <option value="">All sectors</option>
-  </select>
-  <select id="sort">
-    <option value="surge">Sort: Signal (desc)</option>
-    <option value="ret1d">Sort: 1d Return</option>
-    <option value="ret5d">Sort: 5d Return</option>
-    <option value="rsi14">Sort: RSI</option>
-    <option value="vol_z">Sort: Volume z</option>
-    <option value="iv30">Sort: IV30</option>
-    <option value="news_24h">Sort: News count</option>
-    <option value="symbol">Sort: Symbol (A→Z)</option>
-  </select>
-  <label class="toggle"><input id="watchOnly" type="checkbox"> Watchlist</label>
-  <span class="asof" id="asof">—</span>
-</section>
+  <section class="toolbar">
+    <input id="search" type="search" placeholder="Filter symbol or name…" />
+    <div class="pills">
+      <button class="pill" data-filter="rsiHigh">RSI&gt;70</button>
+      <button class="pill" data-filter="rsiLow">RSI&lt;30</button>
+      <button class="pill" data-filter="volHigh">Vol Z&gt;2</button>
+      <button class="pill" data-filter="volLow">Vol Z&lt;-2</button>
+      <button class="pill" data-filter="news">News&gt;0</button>
+      <button class="pill" data-filter="clear">Clear</button>
+    </div>
+  </section>
 
-<section class="table-wrap">
-  <table id="grid">
-    <thead>
-      <tr>
-        <th></th>
-        <th>Ticker</th>
-        <th>Name</th>
-        <th>Sector</th>
-        <th class="num">Price</th>
-        <th class="num">1d%</th>
-        <th class="num">5d%</th>
-        <th class="num">RSI</th>
-        <th class="num">IV30</th>
-        <th class="num">Vol z</th>
-        <th class="num">News</th>
-        <th>Spark</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
-</section>
+  <main>
+    <div class="table-wrap">
+      <table id="grid">
+        <thead>
+          <tr>
+            <th data-sort="symbol">Symbol</th>
+            <th data-sort="name" class="hide-sm">Name</th>
+            <th data-sort="price" class="num">Price</th>
+            <th data-sort="ret1d" class="num">% 1d</th>
+            <th data-sort="ret5d" class="num hide-sm">% 5d</th>
+            <th data-sort="rsi14" class="num">RSI14</th>
+            <th data-sort="vol_z" class="num">Vol Z</th>
+            <th data-sort="sharpe" class="num">Sharpe</th>
+            <th data-sort="pe_ttm" class="num hide-md">P/E</th>
+            <th data-sort="pb" class="num hide-md">P/B</th>
+            <th data-sort="div_yield" class="num hide-md">Div%</th>
+            <th data-sort="mcap" class="num hide-md">MktCap</th>
+            <th data-sort="beta" class="num hide-lg">β</th>
+            <th class="spark">30d</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
 
-<footer>
-  <p>Data built daily via GitHub Actions. IV from ORATS/Polygon if configured; prices via Yahoo Finance. Not investment advice.</p>
-</footer>
+  <footer class="foot">
+    <span id="count">—</span>
+    <span class="spacer"></span>
+    <a href="data/snapshot.json" target="_blank" rel="noopener">raw JSON</a>
+  </footer>
 
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
