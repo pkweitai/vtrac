@@ -62,7 +62,7 @@
     <a href="data/snapshot.json" target="_blank" rel="noopener">raw JSON</a>
   </footer>
 
-  <!-- IMPORTANT: defer so DOM exists before app.js runs -->
-  <script src="app.js" defer></script>
+  <!-- defer + cache-bust so DOM exists & old JS isn't cached -->
+  <script src="app.js?v=fix2" defer></script>
 </body>
 </html>
