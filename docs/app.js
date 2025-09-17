@@ -2,24 +2,27 @@
 (() => {
   'use strict';
 
-  // helpers
+  // ── DOM helpers
   const $  = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
-  const pct = x => (x==null||isNaN(x)) ? '—' : (x*100).toFixed(2)+'%';
-  const num = (x,d=2) => (x==null||isNaN(x)) ? '—' : Number(x).toFixed(d);
-  const tvSym = s => String(s||'').replace('-', '.'); // TV uses dots, e.g. BRK.B
 
-  // state
+  // ── formatters
+  const pct = x => (x==null || isNaN(x)) ? '—' : (x*100).toFixed(2)+'%';
+  const num = (x,d=2) => (x==null || isNaN(x)) ? '—' : Number(x).toFixed(d);
+  const tvSym = s => String(s||'').replace('-', '.'); // TradingView uses dot
+
+  // ── state
   const state = {
     all: [],
     watch: new Set(JSON.parse(localStorage.getItem('watchlist') || '[]')),
     watchOnly: false,
   };
 
+  // ── scoring
   function calcSurge(r){
-    const ivz  = r.iv_rank!=null ? r.iv_rank : 0;
-    const volz = Math.max(r.vol_z ?? 0, 0);
-    const news = Math.min(r.news_24h ?? 0, 20) / 10; // 0..2
+    const ivz  = r.iv_rank!=null ? r.iv_rank : 0;                 // 0..100 if you later populate it
+    const volz = Math.max(r.vol_z ?? 0, 0);                       // emphasize spikes
+    const news = Math.min(r.news_24h ?? 0, 20) / 10;              // 0..2
     const ret  = Math.max(Math.abs(r.ret1d ?? 0), Math.abs(r.ret5d ?? 0));
     const rsiK = r.rsi14!=null ? Math.max(0, Math.abs((r.rsi14-50)/50))*0.5 : 0;
     return +(0.35*ivz + 0.25*ret*10 + 0.2*volz + 0.15*news + 0.05*rsiK).toFixed(3);
@@ -42,7 +45,6 @@
 
   function render(){
     const tbody = $('#rows'); if(!tbody) return;
-    tbody.innerHTML = '';
     const qEl = $('#q'), secEl = $('#sector'), sortEl = $('#sort'), watchEl = $('#watchOnly');
 
     let rows = [...state.all];
@@ -58,7 +60,7 @@
     const sec = secEl?.value || '';
     if(sec) rows = rows.filter(r => r.sector === sec);
 
-    // watchlist
+    // watchlist only
     state.watchOnly = !!(watchEl?.checked);
     if(state.watchOnly) rows = rows.filter(r => state.watch.has(r.symbol));
 
@@ -95,13 +97,13 @@
     });
     tbody.appendChild(frag);
 
-    // stars
-    $$('.star').forEach(el => el.onclick = () => {
+    // star handlers
+    $$('.star').forEach(el => el.addEventListener('click', () => {
       const s = el.dataset.sym;
       if(state.watch.has(s)) state.watch.delete(s); else state.watch.add(s);
       localStorage.setItem('watchlist', JSON.stringify([...state.watch]));
       render();
-    });
+    }));
   }
 
   async function load(){
@@ -110,7 +112,8 @@
       const js = await res.json();
       $('#asof')?.replaceChildren(document.createTextNode(`As of ${js.as_of_utc}`));
       state.all = Array.isArray(js.data) ? js.data : [];
-      // sectors
+
+      // sectors into select
       const sectors = [...new Set(state.all.map(r=>r.sector).filter(Boolean))].sort();
       const sel = $('#sector');
       if (sel) {
@@ -126,18 +129,9 @@
     }
   }
 
-  // Run after DOM is ready (also safe thanks to <script defer>)
-  document.addEventListener('DOMContentLoaded', () => {
-    // wire events safely
+  // Ensure DOM exists before wiring events
+  window.addEventListener('DOMContentLoaded', () => {
     $('#q')?.addEventListener('input', render);
     $('#sector')?.addEventListener('change', render);
     $('#sort')?.addEventListener('change', render);
     $('#watchOnly')?.addEventListener('change', render);
-    $('#themeBtn')?.addEventListener('click', () => {
-      const root = document.documentElement;
-      const cur = root.getAttribute('data-theme') || 'dark';
-      root.setAttribute('data-theme', cur==='dark' ? 'light' : 'dark');
-    });
-    load();
-  });
-})();
