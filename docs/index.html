@@ -1,65 +1,68 @@
+<!-- docs/index.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>S&P 500 Radar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Radar</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
     <h1>Market Radar</h1>
     <div class="meta">
-      <span id="asOf">as of —</span>
-      <span id="intp" class="badge"></span>
-      <button id="reloadBtn" title="Reload snapshot">↻</button>
+      <span id="asof">As of —</span>
+      <button id="themeBtn" title="Toggle theme">🌓</button>
     </div>
   </header>
 
   <section class="toolbar">
-    <input id="search" type="search" placeholder="Filter symbol or name…" />
-    <div class="pills">
-      <button class="pill" data-filter="rsiHigh">RSI&gt;70</button>
-      <button class="pill" data-filter="rsiLow">RSI&lt;30</button>
-      <button class="pill" data-filter="volHigh">Vol Z&gt;2</button>
-      <button class="pill" data-filter="volLow">Vol Z&lt;-2</button>
-      <button class="pill" data-filter="news">News&gt;0</button>
-      <button class="pill" data-filter="clear">Clear</button>
-    </div>
+    <input id="q" type="search" placeholder="Search symbol or name…" />
+    <select id="sector">
+      <option value="">All sectors</option>
+    </select>
+    <select id="sort" title="Sort by">
+      <option value="surge" selected>Surge</option>
+      <option value="ret1d">% 1d</option>
+      <option value="ret5d">% 5d</option>
+      <option value="rsi14">RSI14</option>
+      <option value="vol_z">Vol Z</option>
+      <option value="news_24h">News</option>
+      <option value="price">Price</option>
+      <option value="symbol">Symbol</option>
+      <option value="name">Name</option>
+      <option value="sector">Sector</option>
+    </select>
+    <label class="chk"><input id="watchOnly" type="checkbox" /> Watchlist only</label>
   </section>
 
-  <main>
-    <div class="table-wrap">
-      <table id="grid">
-        <thead>
-          <tr>
-            <th data-sort="symbol">Symbol</th>
-            <th data-sort="name" class="hide-sm">Name</th>
-            <th data-sort="price" class="num">Price</th>
-            <th data-sort="ret1d" class="num">% 1d</th>
-            <th data-sort="ret5d" class="num hide-sm">% 5d</th>
-            <th data-sort="rsi14" class="num">RSI14</th>
-            <th data-sort="vol_z" class="num">Vol Z</th>
-            <th data-sort="sharpe" class="num">Sharpe</th>
-            <th data-sort="pe_ttm" class="num hide-md">P/E</th>
-            <th data-sort="pb" class="num hide-md">P/B</th>
-            <th data-sort="div_yield" class="num hide-md">Div%</th>
-            <th data-sort="mcap" class="num hide-md">MktCap</th>
-            <th data-sort="beta" class="num hide-lg">β</th>
-            <th class="spark">30d</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
+  <main class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>★</th>
+          <th>Symbol</th>
+          <th class="hide-sm">Name</th>
+          <th class="hide-sm">Sector</th>
+          <th class="num">Price</th>
+          <th class="num">% 1d</th>
+          <th class="num hide-sm">% 5d</th>
+          <th class="num">RSI14</th>
+          <th class="num">IV30</th>
+          <th class="num">Vol Z</th>
+          <th class="num hide-sm">News</th>
+          <th class="num">30d</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
   </main>
 
   <footer class="foot">
-    <span id="count">—</span>
-    <span class="spacer"></span>
-    <a href="docs/data/snapshot.json" target="_blank" rel="noopener">raw JSON</a>
+    <a href="data/snapshot.json" target="_blank" rel="noopener">raw JSON</a>
   </footer>
 
-  <script src="app.js"></script>
+  <!-- IMPORTANT: defer so DOM exists before app.js runs -->
+  <script src="app.js" defer></script>
 </body>
 </html>
