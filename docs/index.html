@@ -18,29 +18,32 @@
 
   <section class="toolbar">
     <input id="q" type="search" placeholder="Search symbol or name…" />
-    <select id="sector">
-      <option value="">All sectors</option>
-    </select>
-    <select id="sort" title="Sort by">
-      <option value="surge" selected>Surge</option>
-      <option value="ret1d">% 1d</option>
+    <select id="sector"><option value="">All sectors</option></select>
+    <select id="sort">
+      <option value="symbol">Symbol</option>
+      <option value="price">Price</option>
+      <option value="ret1d" selected>% 1d</option>
       <option value="ret5d">% 5d</option>
       <option value="rsi14">RSI14</option>
+      <option value="sharpe">Sharpe</option>
       <option value="vol_z">Vol Z</option>
+      <option value="iv30">IV30</option>
+      <option value="iv_rank">IV Rank</option>
+      <option value="iv_percentile">IV %ile</option>
+      <option value="pe_ttm">P/E</option>
+      <option value="pb">P/B</option>
+      <option value="div_yield">Div%</option>
+      <option value="mcap">MktCap</option>
+      <option value="beta">Beta</option>
       <option value="news_24h">News</option>
-      <option value="price">Price</option>
-      <option value="symbol">Symbol</option>
-      <option value="name">Name</option>
-      <option value="sector">Sector</option>
     </select>
-    <label class="chk"><input id="watchOnly" type="checkbox" /> Watchlist only</label>
+    <select id="dir"><option value="desc" selected>Desc</option><option value="asc">Asc</option></select>
   </section>
 
   <main class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>★</th>
           <th>Symbol</th>
           <th class="hide-sm">Name</th>
           <th class="hide-sm">Sector</th>
@@ -48,9 +51,16 @@
           <th class="num">% 1d</th>
           <th class="num hide-sm">% 5d</th>
           <th class="num">RSI14</th>
-          <th class="num">IV30</th>
+          <th class="num">Sharpe</th>
           <th class="num">Vol Z</th>
-          <th class="num hide-sm">News</th>
+          <th class="num">IV30</th>
+          <th class="num">IV Rank</th>
+          <th class="num">IV %ile</th>
+          <th class="num hide-sm">P/E</th>
+          <th class="num hide-sm">P/B</th>
+          <th class="num hide-sm">Div%</th>
+          <th class="num hide-sm">MktCap</th>
+          <th class="num hide-sm">Beta</th>
           <th class="num">30d</th>
         </tr>
       </thead>
@@ -59,10 +69,11 @@
   </main>
 
   <footer class="foot">
+    <span id="meta"></span>
+    <span class="spacer"></span>
     <a href="data/snapshot.json" target="_blank" rel="noopener">raw JSON</a>
   </footer>
 
-  <!-- defer + cache-bust so DOM exists & old JS isn't cached -->
-  <script src="app.js?v=fix2" defer></script>
+  <script src="app.js?v=iv1" defer></script>
 </body>
 </html>
