@@ -196,4 +196,104 @@
         <td class="stick-l"><span class="chev ${isOpen?'open':''}" data-sym="${r.symbol}" title="Expand">▸</span></td>
         <td class="stick-l"><a href="https://www.tradingview.com/symbols/${tv(r.symbol)}/" target="_blank" rel="noopener">${esc(r.symbol)}</a></td>
         <td class="hide-sm">${esc(r.name ?? '')}</td>
-        <td class="h
+        <td class="hide-sm"><span class="badge">${esc(r.sector ?? '—')}</span></td>
+        <td class="num">${n2(r.price,2)}</td>
+        <td class="num ${d1>=0?'pos':'neg'}">${pct(r.ret1d)}</td>
+        <td class="num hide-sm ${(+r.ret5d||0)>=0?'pos':'neg'}">${pct(r.ret5d)}</td>
+        <td class="num">${n2(r.rsi_ui,1)}</td>
+        <td class="num">${n2(r.sharpe_ui,3)}</td>
+        <td class="num">${n2(r.vol_z,2)}</td>
+        <td class="num">${r.iv30==null?'—':pct(r.iv30)}</td>
+        <td class="num">${n2(r.iv_rank_ui,2)}</td>
+        <td class="num">${n2(r.iv_pct_ui,2)}</td>
+        <td class="num hide-sm">${n2(r.pe_ttm,2)}</td>
+        <td class="num hide-sm">${n2(r.pb,2)}</td>
+        <td class="num hide-sm">${pct(r.div_yield!=null ? r.div_yield/100.0 : null)}</td>
+        <td class="num hide-sm">${mcap(r.mcap)}</td>
+        <td class="num hide-sm">${n2(r.beta,2)}</td>
+        <td class="num">${sparkSVG(r.spark30)}</td>
+      `;
+      frag.appendChild(tr);
+
+      if (isOpen){
+        const tr2 = document.createElement('tr');
+        tr2.className = 'expander';
+        tr2.innerHTML = `<td colspan="19"><div class="panel-wrap">${detailPanel(r)}</div></td>`;
+        frag.appendChild(tr2);
+      }
+    });
+
+    tb.appendChild(frag);
+
+    tb.querySelectorAll('.chev').forEach(el => {
+      el.onclick = () => {
+        const s = el.getAttribute('data-sym');
+        if (state.expanded.has(s)) state.expanded.delete(s);
+        else state.expanded.add(s);
+        render();
+      };
+    });
+
+    updateStatus();
+  }
+
+  // ── data load ────────────────────────────────────────────────────────────
+  async function load(){
+    const ts = bust();
+    // snapshot
+    const snapRes = await fetch(`data/snapshot.json?${ts}`, {cache:'no-store'});
+    const js = await snapRes.json();
+    state.asOf = js.as_of_utc || '';
+    state.interval = js.interval || '';
+    state.period = js.period || '';
+    state.rf = Number(js.risk_free || 0);
+
+    state.rows = (js.data||[]).map(x => ({
+      symbol:x.symbol, name:x.name??x.symbol, sector:x.sector??'—',
+      price:+x.price, ret1d:x.ret1d, ret5d:x.ret5d, rsi14:x.rsi14, sharpe:x.sharpe,
+      vol_z:x.vol_z, iv30:x.iv30, iv_rank:x.iv_rank, iv_percentile:x.iv_percentile,
+      mcap:x.mcap, pe_ttm:x.pe_ttm, pb:x.pb, div_yield:x.div_yield, beta:x.beta,
+      news_24h:x.news_24h, spark30:(Array.isArray(x.spark30)?x.spark30:null),
+      hist:(x.hist||null),
+      rsi_ui:null, sharpe_ui:null, iv_rank_ui:null, iv_pct_ui:null
+    }));
+
+    // sectors
+    const sel = $('sector');
+    const set = new Set(state.rows.map(r=>r.sector).filter(Boolean));
+    sel.innerHTML = '<option value="">All sectors</option>';
+    [...set].sort().forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+
+    // iv history
+    try{
+      const ivRes = await fetch(`data/iv_history.json?${ts}`, {cache:'no-store'});
+      if (ivRes.ok){
+        state.ivHist = await ivRes.json();
+      }
+    }catch(_){ state.ivHist = {}; }
+
+    applyFilters(); render();
+  }
+
+  // ── events ───────────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    $('q').addEventListener('input', () => { applyFilters(); render(); });
+    $('sector').addEventListener('change', () => { applyFilters(); render(); });
+    $('sort').addEventListener('change', () => { applyFilters(); render(); });
+    $('dir').addEventListener('change', () => { applyFilters(); render(); });
+
+    $('rsiWin').addEventListener('change', () => { state.ui.rsiWin = +$('rsiWin').value; applyFilters(); render(); });
+    $('sharpeWin').addEventListener('change', () => { state.ui.sharpeWin = +$('sharpeWin').value; applyFilters(); render(); });
+    $('ivWin').addEventListener('change', () => { state.ui.ivWin = +$('ivWin').value; applyFilters(); render(); });
+
+    $('themeBtn').addEventListener('click', () => {
+      const root = document.documentElement;
+      const cur = root.getAttribute('data-theme') || 'dark';
+      root.setAttribute('data-theme', cur==='dark' ? 'light' : 'dark');
+    });
+    $('scrollLeft').addEventListener('click', () => $('tableWrap').scrollBy({left:-300,behavior:'smooth'}));
+    $('scrollRight').addEventListener('click', () => $('tableWrap').scrollBy({left:300,behavior:'smooth'}));
+
+    load();
+  });
+})();
