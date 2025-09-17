@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>S&P 500 Radar — Daily Signals</title>
+  <meta name="theme-color" content="#0fe17a">
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="dot"></div>
+    <h1>S&amp;P 500 Radar</h1>
+  </div>
+  <div class="right">
+    <button id="themeBtn" title="Toggle theme">☾</button>
+  </div>
+</header>
+
+<section class="toolbar">
+  <input id="q" type="search" placeholder="Search symbol or name…" autofocus>
+  <select id="sector">
+    <option value="">All sectors</option>
+  </select>
+  <select id="sort">
+    <option value="surge">Sort: Signal (desc)</option>
+    <option value="ret1d">Sort: 1d Return</option>
+    <option value="ret5d">Sort: 5d Return</option>
+    <option value="rsi14">Sort: RSI</option>
+    <option value="vol_z">Sort: Volume z</option>
+    <option value="iv30">Sort: IV30</option>
+    <option value="news_24h">Sort: News count</option>
+    <option value="symbol">Sort: Symbol (A→Z)</option>
+  </select>
+  <label class="toggle"><input id="watchOnly" type="checkbox"> Watchlist</label>
+  <span class="asof" id="asof">—</span>
+</section>
+
+<section class="table-wrap">
+  <table id="grid">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Ticker</th>
+        <th>Name</th>
+        <th>Sector</th>
+        <th class="num">Price</th>
+        <th class="num">1d%</th>
+        <th class="num">5d%</th>
+        <th class="num">RSI</th>
+        <th class="num">IV30</th>
+        <th class="num">Vol z</th>
+        <th class="num">News</th>
+        <th>Spark</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+
+<footer>
+  <p>Data built daily via GitHub Actions. IV from ORATS/Polygon if configured; prices via Yahoo Finance. Not investment advice.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
