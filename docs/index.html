@@ -5,6 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Market Radar</title>
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Scoped panel polish so expanded rows look great -->
+  <style>
+    :root {
+      --bg: #0f1115;
+      --bg-soft: #141821;
+      --text: #e7eaf3;
+      --muted: #9aa4b2;
+      --border: #242938;
+      --accent: #6ea8fe;
+      --pos: #3bd6a2;
+      --neg: #ff6b6b;
+      --chip-bg: rgba(110,168,254,.12);
+      --chip-bd: rgba(110,168,254,.45);
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --bg-soft: #f6f8fb;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --pos: #16a34a;
+      --neg: #dc2626;
+      --chip-bg: rgba(37,99,235,.10);
+      --chip-bd: rgba(37,99,235,.40);
+    }
+
+    /* Expanded row panel */
+    .panel-wrap { padding: 12px; }
+    .detail {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      padding: 14px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    @media (max-width: 920px) {
+      .detail { grid-template-columns: 1fr; }
+    }
+
+    .hdr-line {
+      display:flex; align-items:baseline; gap:10px; margin-bottom:10px;
+    }
+    .ticker { font-size: 22px; font-weight: 700; letter-spacing: .3px; }
+    .name   { font-size: 14px; color: var(--muted); }
+    .price-chip {
+      margin-left: auto;
+      font-weight: 600;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .spark-wrap {
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.00));
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .sparkline { width: 100%; height: 90px; display:block; }
+    .sparkline path { stroke: var(--accent); fill: none; stroke-width: 2; }
+    .sparkline .baseline { stroke: rgba(255,255,255,.08); stroke-dasharray: 3 4; }
+
+    .stats {
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+    }
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: 1fr; }
+    }
+    .stat {
+      display:grid; grid-template-columns: 120px 1fr; gap: 6px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+    }
+    .stat .k { color: var(--muted); }
+    .stat .v { text-align:right; font-weight:600; }
+
+    .alert-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top: 8px; }
+    .chip {
+      padding: 3px 8px; border-radius: 999px; font-size: 12px; line-height: 1;
+      border: 1px solid var(--chip-bd); background: var(--chip-bg);
+      white-space: nowrap;
+    }
+    .chip.warn { border-color: rgba(255,193,7,.45); background: rgba(255,193,7,.15); }
+    .chip.risk { border-color: rgba(244,67,54,.45); background: rgba(244,67,54,.15); }
+
+    .why { color: var(--muted); font-size: 12px; }
+    .idea { font-size: 12px; opacity: .95; }
+
+    .link-row { margin-top: 10px; display:flex; gap:14px; flex-wrap:wrap; }
+    .link-row a { text-decoration:none; font-weight:600; border-bottom:1px dashed var(--border); }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -49,7 +149,6 @@
     <select id="dir"><option value="desc" selected>Desc</option><option value="asc">Asc</option></select>
   </section>
 
-  <!-- Dynamic windows -->
   <section class="toolbar sub">
     <label>RSI win
       <select id="rsiWin"><option>14</option><option>21</option><option selected>30</option><option>50</option></select>
@@ -104,6 +203,6 @@
     <a href="data/iv_history.json" target="_blank" rel="noopener">iv history</a>
   </footer>
 
-  <script src="app.js?v=alerts1" defer></script>
+  <script src="app.js?v=detail-polish1" defer></script>
 </body>
 </html>
