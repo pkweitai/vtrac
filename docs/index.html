@@ -18,6 +18,19 @@
   <section class="toolbar">
     <input id="q" type="search" placeholder="Search symbol or name…" />
     <select id="sector"><option value="">All sectors</option></select>
+    <select id="alertFilter">
+      <option value="">All alerts</option>
+      <option value="brk">Breakout</option>
+      <option value="pbuy">Pullback Buy</option>
+      <option value="osb">Oversold Bounce</option>
+      <option value="obf">Overbought Fade</option>
+      <option value="bullDiv">Bullish Divergence</option>
+      <option value="bearDiv">Bearish Divergence</option>
+      <option value="range">Range Income</option>
+      <option value="ivHigh">High IV (Sell)</option>
+      <option value="ivLow">Low IV (Buy)</option>
+      <option value="event">Event Spike</option>
+    </select>
     <select id="sort">
       <option value="symbol">Symbol</option>
       <option value="price">Price</option>
@@ -29,35 +42,23 @@
       <option value="iv30">IV30</option>
       <option value="iv_rank_ui">IV Rank</option>
       <option value="iv_pct_ui">IV %ile</option>
-      <option value="pe_ttm">P/E</option>
-      <option value="pb">P/B</option>
-      <option value="div_yield">Div%</option>
       <option value="mcap">MktCap</option>
       <option value="beta">Beta</option>
-      <option value="news_24h">News</option>
+      <option value="alertCount"># Alerts</option>
     </select>
-    <select id="dir">
-      <option value="desc" selected>Desc</option>
-      <option value="asc">Asc</option>
-    </select>
+    <select id="dir"><option value="desc" selected>Desc</option><option value="asc">Asc</option></select>
   </section>
 
-  <!-- Dynamic computation windows -->
+  <!-- Dynamic windows -->
   <section class="toolbar sub">
     <label>RSI win
-      <select id="rsiWin">
-        <option>14</option><option>21</option><option selected>30</option><option>50</option>
-      </select>
+      <select id="rsiWin"><option>14</option><option>21</option><option selected>30</option><option>50</option></select>
     </label>
     <label>Sharpe lookback
-      <select id="sharpeWin">
-        <option>60</option><option selected>120</option><option>180</option><option>252</option><option>360</option>
-      </select>
+      <select id="sharpeWin"><option>60</option><option selected>120</option><option>180</option><option>252</option><option>360</option></select>
     </label>
     <label>IV window
-      <select id="ivWin">
-        <option>90</option><option selected>180</option><option>252</option><option>360</option>
-      </select>
+      <select id="ivWin"><option>90</option><option selected>180</option><option>252</option><option>360</option></select>
     </label>
   </section>
 
@@ -78,6 +79,7 @@
             <th class="num">Sharpe</th>
             <th class="num">Vol Z</th>
             <th class="num">IV30</th>
+            <th>Alerts</th>
             <th class="num">IV Rank</th>
             <th class="num">IV %ile</th>
             <th class="num hide-sm">P/E</th>
@@ -102,7 +104,6 @@
     <a href="data/iv_history.json" target="_blank" rel="noopener">iv history</a>
   </footer>
 
-  <!-- bump version to bust cache when you deploy -->
-  <script src="app.js?v=win3" defer></script>
+  <script src="app.js?v=alerts1" defer></script>
 </body>
 </html>
