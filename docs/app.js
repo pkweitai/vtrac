@@ -11,7 +11,7 @@
   const bust = () => `ts=${Date.now()}`;
 
   // spark
-  function sparkSVG(values, w=120, h=28, pad=2){
+  function sparkSVG(values, w=520, h=90, pad=8){
     if (!Array.isArray(values) || values.length < 2) return '';
     const xs = values.map((_,i)=> pad + i*(w-2*pad)/(values.length-1));
     const ys = values.map(v => {
@@ -121,11 +121,12 @@
     return row;
   }
 
-  function badge(a){
+  function chip(a){
     const sev = a.sev || 'info';
     const lbl = a.label || ALERT_LABELS[a.code] || a.code;
-    const title = a.why ? esc(a.why) : '';
-    return `<span class="alert-badge ${sev}" title="${title}">${esc(lbl)}</span>`;
+    const why = a.why ? `<div class="why">${esc(a.why)}</div>` : '';
+    const idea = a.opt ? `<div class="idea"><strong>Idea:</strong> ${esc(a.opt)}</div>` : '';
+    return `<div class="chip ${sev}" title="${esc(lbl)}">${esc(lbl)}</div>${why}${idea}`;
   }
 
   function applyFilters(){
@@ -150,47 +151,59 @@
     state.filtered = rows;
   }
 
-  function detailPanel(r){
-    const lines = (Array.isArray(r.alerts) ? r.alerts : []).map(a => `
-      <li>
-        <span class="alert-badge ${a.sev||'info'}">${esc(a.label||ALERT_LABELS[a.code]||a.code)}</span>
-        <div class="why">${esc(a.why||'')}</div>
-        ${a.opt ? `<div class="opt"><strong>Idea:</strong> ${esc(a.opt)}</div>` : ''}
-      </li>`).join('') || '<li class="muted">No active alerts</li>';
-
+  function panelStats(r){
     const divPct = (r.div_yield!=null ? (r.div_yield/100.0) : null);
+    const stats = [
+      ["Sector", r.sector ?? "—"],
+      ["Price", n2(r.price,2)],
+      ["1D / 5D", `${pct(r.ret1d)} / ${pct(r.ret5d)}`],
+      [`RSI (${state.ui.rsiWin})`, n2(r.rsi_ui,1)],
+      [`Sharpe (${state.ui.sharpeWin})`, n2(r.sharpe_ui,3)],
+      ["Vol Z", n2(r.vol_z,2)],
+      ["IV30", r.iv30==null ? "—" : pct(r.iv30)],
+      [`IV Rank (${state.ui.ivWin})`, n2(r.iv_rank_ui,2)],
+      [`IV %ile (${state.ui.ivWin})`, n2(r.iv_pct_ui,2)],
+      ["P/E", n2(r.pe_ttm,2)],
+      ["P/B", n2(r.pb,2)],
+      ["Div%", pct(divPct)],
+      ["MktCap", mcap(r.mcap)],
+      ["Beta", n2(r.beta,2)],
+      ["News (24h)", r.news_24h==null?'—':r.news_24h]
+    ];
+    return stats.map(([k,v]) => `
+      <div class="stat">
+        <div class="k">${esc(k)}</div>
+        <div class="v">${esc(v)}</div>
+      </div>
+    `).join('');
+  }
+
+  function detailPanel(r){
+    const chips = (Array.isArray(r.alerts) ? r.alerts : [])
+      .map(a => `<div>${chip(a)}</div>`).join('') || '<div class="why">No active alerts</div>';
+
     return `
-      <div class="panel">
-        <div class="kv">
-          <div class="k">Symbol</div><div>${esc(r.symbol)} (${esc(r.name||'')})</div>
-          <div class="k">Sector</div><div>${esc(r.sector||'—')}</div>
-          <div class="k">Price</div><div>${n2(r.price,2)}</div>
-          <div class="k">1D / 5D</div><div>${pct(r.ret1d)} / ${pct(r.ret5d)}</div>
-          <div class="k">RSI (${state.ui.rsiWin})</div><div>${n2(r.rsi_ui,1)}</div>
-          <div class="k">Sharpe (${state.ui.sharpeWin})</div><div>${n2(r.sharpe_ui,3)}</div>
-          <div class="k">Vol Z</div><div>${n2(r.vol_z,2)}</div>
-          <div class="k">IV30</div><div>${r.iv30==null?'—':pct(r.iv30)}</div>
-          <div class="k">IV Rank (${state.ui.ivWin})</div><div>${n2(r.iv_rank_ui,2)}</div>
-          <div class="k">IV %ile (${state.ui.ivWin})</div><div>${n2(r.iv_pct_ui,2)}</div>
-          <div class="k">P/E</div><div>${n2(r.pe_ttm,2)}</div>
-          <div class="k">P/B</div><div>${n2(r.pb,2)}</div>
-          <div class="k">Div%</div><div>${pct(divPct)}</div>
-          <div class="k">MktCap</div><div>${mcap(r.mcap)}</div>
-          <div class="k">Beta</div><div>${n2(r.beta,2)}</div>
-          <div class="k">News (24h)</div><div>${r.news_24h==null?'—':r.news_24h}</div>
-        </div>
-        <div class="chart">
-          <div class="big">${sparkSVG(r.spark30 || [], 260, 64, 3)}</div>
-          <div class="links">
-            <div><strong>Links</strong></div>
+      <div class="detail">
+        <div>
+          <div class="hdr-line">
+            <div class="ticker">${esc(r.symbol)}</div>
+            <div class="name">${esc(r.name || '')}</div>
+            <div class="price-chip">$ ${n2(r.price,2)}</div>
+          </div>
+          <div class="spark-wrap">${sparkSVG(r.spark30 || [], 520, 90, 8)}</div>
+          <div class="link-row">
             <a href="https://www.tradingview.com/symbols/${tv(r.symbol)}/" target="_blank" rel="noopener">TradingView</a>
-            <a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}" target="_blank" rel="noopener">Yahoo</a>
-            <a href="https://www.google.com/finance/quote/${encodeURIComponent(r.symbol)}" target="_blank" rel="noopener">Google</a>
+            <a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}" target="_blank" rel="noopener">Yahoo Finance</a>
+            <a href="https://www.google.com/finance/quote/${encodeURIComponent(r.symbol)}" target="_blank" rel="noopener">Google Finance</a>
           </div>
         </div>
-        <div class="alerts-list">
-          <h4>Alerts</h4>
-          <ul>${lines}</ul>
+        <div>
+          <div class="stats">
+            ${panelStats(r)}
+          </div>
+          <div class="alert-chips" style="margin-top:10px;">
+            ${chips}
+          </div>
         </div>
       </div>`;
   }
@@ -211,7 +224,9 @@
       const isOpen = state.expanded.has(r.symbol);
       const tr = document.createElement('tr');
       const d1 = +r.ret1d || 0;
-      const alertHTML = (Array.isArray(r.alerts) ? r.alerts.slice(0,3).map(badge).join(' ') : '');
+      const alertHTML = (Array.isArray(r.alerts) ? r.alerts.slice(0,3).map(a =>
+        `<span class="chip ${a.sev||'info'}" title="${esc(a.why||'')}">${esc(a.label||a.code)}</span>`
+      ).join(' ') : '');
       tr.innerHTML = `
         <td class="stick-l"><span class="chev ${isOpen?'open':''}" data-sym="${r.symbol}" title="Expand">▸</span></td>
         <td class="stick-l"><a href="https://www.tradingview.com/symbols/${tv(r.symbol)}/" target="_blank" rel="noopener">${esc(r.symbol)}</a></td>
@@ -224,7 +239,7 @@
         <td class="num">${n2(r.sharpe_ui,3)}</td>
         <td class="num">${n2(r.vol_z,2)}</td>
         <td class="num">${r.iv30==null?'—':pct(r.iv30)}</td>
-        <td class="alerts-cell">${alertHTML}${r.alertCount>3?` <span class="more">+${r.alertCount-3}</span>`:''}</td>
+        <td class="alerts-cell">${alertHTML}${(r.alerts?.length||0)>3?` <span class="more">+${r.alerts.length-3}</span>`:''}</td>
         <td class="num">${n2(r.iv_rank_ui,2)}</td>
         <td class="num">${n2(r.iv_pct_ui,2)}</td>
         <td class="num hide-sm">${n2(r.pe_ttm,2)}</td>
@@ -232,7 +247,7 @@
         <td class="num hide-sm">${pct(r.div_yield!=null ? r.div_yield/100.0 : null)}</td>
         <td class="num hide-sm">${mcap(r.mcap)}</td>
         <td class="num hide-sm">${n2(r.beta,2)}</td>
-        <td class="num">${sparkSVG(r.spark30)}</td>
+        <td class="num">${sparkSVG(r.spark30, 140, 36, 4)}</td>
       `;
       frag.appendChild(tr);
 
