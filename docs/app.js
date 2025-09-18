@@ -1,7 +1,5 @@
 (() => {
   'use strict';
-
-  // ── helpers ──────────────────────────────────────────────────────────────
   const $  = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const n2 = (x,d=2) => (x==null || !Number.isFinite(+x)) ? '—' : (+x).toFixed(d);
@@ -10,11 +8,9 @@
     if(a>=1e12) return (n/1e12).toFixed(2)+'T'; if(a>=1e9) return (n/1e9).toFixed(2)+'B';
     if(a>=1e6) return (n/1e6).toFixed(2)+'M'; return n.toFixed(0); };
   const tv = s => String(s||'').replace('-', '.');
-
-  // cache-buster for JSON fetches
   const bust = () => `ts=${Date.now()}`;
 
-  // ── sparkline ────────────────────────────────────────────────────────────
+  // spark
   function sparkSVG(values, w=120, h=28, pad=2){
     if (!Array.isArray(values) || values.length < 2) return '';
     const xs = values.map((_,i)=> pad + i*(w-2*pad)/(values.length-1));
@@ -30,7 +26,7 @@
     </svg>`;
   }
 
-  // ── RSI (Wilder) ─────────────────────────────────────────────────────────
+  // RSI (Wilder)
   function rsi(values, period=14){
     const v = values.filter(x => Number.isFinite(+x));
     if (v.length < period+1) return null;
@@ -53,7 +49,6 @@
     return out.length ? out[out.length-1] : null;
   }
 
-  // ── Sharpe (annualized) ──────────────────────────────────────────────────
   function sharpeFromCloses(closes, lookback, rf_annual, interval){
     const v = closes.filter(x => Number.isFinite(+x));
     if (v.length < Math.max(lookback, 2)) return null;
@@ -64,7 +59,6 @@
       if (Number.isFinite(r)) rets.push(r);
     }
     if (rets.length < 2) return null;
-
     function ppy(interval){
       const iv = (interval||'1d').toLowerCase();
       if (iv==='1d') return 252;
@@ -87,7 +81,6 @@
     return (mean/sd)*Math.sqrt(P);
   }
 
-  // ── IV rank/percentile ───────────────────────────────────────────────────
   function ivRankPct(history, current, win){
     const vals = (history||[]).slice(-win).filter(x => Number.isFinite(+x));
     if (!vals.length || !Number.isFinite(+current)) return {rank:null, pct:null};
@@ -97,21 +90,24 @@
     return {rank, pct};
   }
 
-  // ── state ────────────────────────────────────────────────────────────────
   const state = {
     rows:[], filtered:[], asOf:'', interval:'', period:'', rf:0,
     expanded:new Set(), ivHist:{},
-    ui: { rsiWin:30, sharpeWin:120, ivWin:180 }
+    ui: { rsiWin:30, sharpeWin:120, ivWin:180 },
   };
 
-  // recompute fields based on current UI windows
+  const ALERT_LABELS = {
+    brk:"Breakout", pbuy:"Pullback Buy", osb:"Oversold Bounce", obf:"Overbought Fade",
+    bullDiv:"Bullish Divergence", bearDiv:"Bearish Divergence", range:"Range Income",
+    ivHigh:"High IV (Sell)", ivLow:"Low IV (Buy)", event:"Event Spike"
+  };
+
   function enrichForUI(row){
     const c = (row.hist && Array.isArray(row.hist.c)) ? row.hist.c.map(Number) : [];
-    // RSI
     row.rsi_ui = (c.length >= state.ui.rsiWin + 1) ? rsi(c, state.ui.rsiWin) : null;
-    // Sharpe
     row.sharpe_ui = (c.length >= state.ui.sharpeWin) ? sharpeFromCloses(c, state.ui.sharpeWin, state.rf, state.interval) : null;
-    // IV
+
+    // IV rank/%ile using history
     const ivSeries = (state.ivHist[row.symbol] || []).map(Number);
     const curIV = Number.isFinite(+row.iv30) ? +row.iv30 : null;
     const win = state.ui.ivWin;
@@ -119,7 +115,17 @@
     const {rank, pct} = enoughIV && curIV!=null ? ivRankPct(ivSeries, curIV, win) : {rank:null, pct:null};
     row.iv_rank_ui = rank == null ? null : +rank;
     row.iv_pct_ui  = pct  == null ? null : +pct;
+
+    // count alerts (server-provided)
+    row.alertCount = Array.isArray(row.alerts) ? row.alerts.length : 0;
     return row;
+  }
+
+  function badge(a){
+    const sev = a.sev || 'info';
+    const lbl = a.label || ALERT_LABELS[a.code] || a.code;
+    const title = a.why ? esc(a.why) : '';
+    return `<span class="alert-badge ${sev}" title="${title}">${esc(lbl)}</span>`;
   }
 
   function applyFilters(){
@@ -127,10 +133,12 @@
     const sec = $('sector').value;
     const key = $('sort').value;
     const dir = $('dir').value === 'asc' ? 1 : -1;
+    const af = $('alertFilter').value;
 
     let rows = state.rows.slice().map(enrichForUI);
     if (q) rows = rows.filter(r => r.symbol.toLowerCase().includes(q) || (r.name||'').toLowerCase().includes(q));
     if (sec) rows = rows.filter(r => r.sector === sec);
+    if (af) rows = rows.filter(r => (Array.isArray(r.alerts) && r.alerts.some(a => a.code === af)));
 
     rows.sort((a,b) => {
       if (['symbol','name','sector'].includes(key)) return String(a[key]||'').localeCompare(String(b[key]||'')) * dir;
@@ -143,6 +151,13 @@
   }
 
   function detailPanel(r){
+    const lines = (Array.isArray(r.alerts) ? r.alerts : []).map(a => `
+      <li>
+        <span class="alert-badge ${a.sev||'info'}">${esc(a.label||ALERT_LABELS[a.code]||a.code)}</span>
+        <div class="why">${esc(a.why||'')}</div>
+        ${a.opt ? `<div class="opt"><strong>Idea:</strong> ${esc(a.opt)}</div>` : ''}
+      </li>`).join('') || '<li class="muted">No active alerts</li>';
+
     const divPct = (r.div_yield!=null ? (r.div_yield/100.0) : null);
     return `
       <div class="panel">
@@ -173,6 +188,10 @@
             <a href="https://www.google.com/finance/quote/${encodeURIComponent(r.symbol)}" target="_blank" rel="noopener">Google</a>
           </div>
         </div>
+        <div class="alerts-list">
+          <h4>Alerts</h4>
+          <ul>${lines}</ul>
+        </div>
       </div>`;
   }
 
@@ -192,6 +211,7 @@
       const isOpen = state.expanded.has(r.symbol);
       const tr = document.createElement('tr');
       const d1 = +r.ret1d || 0;
+      const alertHTML = (Array.isArray(r.alerts) ? r.alerts.slice(0,3).map(badge).join(' ') : '');
       tr.innerHTML = `
         <td class="stick-l"><span class="chev ${isOpen?'open':''}" data-sym="${r.symbol}" title="Expand">▸</span></td>
         <td class="stick-l"><a href="https://www.tradingview.com/symbols/${tv(r.symbol)}/" target="_blank" rel="noopener">${esc(r.symbol)}</a></td>
@@ -204,6 +224,7 @@
         <td class="num">${n2(r.sharpe_ui,3)}</td>
         <td class="num">${n2(r.vol_z,2)}</td>
         <td class="num">${r.iv30==null?'—':pct(r.iv30)}</td>
+        <td class="alerts-cell">${alertHTML}${r.alertCount>3?` <span class="more">+${r.alertCount-3}</span>`:''}</td>
         <td class="num">${n2(r.iv_rank_ui,2)}</td>
         <td class="num">${n2(r.iv_pct_ui,2)}</td>
         <td class="num hide-sm">${n2(r.pe_ttm,2)}</td>
@@ -218,7 +239,7 @@
       if (isOpen){
         const tr2 = document.createElement('tr');
         tr2.className = 'expander';
-        tr2.innerHTML = `<td colspan="19"><div class="panel-wrap">${detailPanel(r)}</div></td>`;
+        tr2.innerHTML = `<td colspan="20"><div class="panel-wrap">${detailPanel(r)}</div></td>`;
         frag.appendChild(tr2);
       }
     });
@@ -237,7 +258,6 @@
     updateStatus();
   }
 
-  // ── data load ────────────────────────────────────────────────────────────
   async function load(){
     const ts = bust();
     // snapshot
@@ -254,8 +274,9 @@
       vol_z:x.vol_z, iv30:x.iv30, iv_rank:x.iv_rank, iv_percentile:x.iv_percentile,
       mcap:x.mcap, pe_ttm:x.pe_ttm, pb:x.pb, div_yield:x.div_yield, beta:x.beta,
       news_24h:x.news_24h, spark30:(Array.isArray(x.spark30)?x.spark30:null),
-      hist:(x.hist||null),
-      rsi_ui:null, sharpe_ui:null, iv_rank_ui:null, iv_pct_ui:null
+      hist:(x.hist||null), alerts:(Array.isArray(x.alerts)?x.alerts:[]),
+      // UI-calculated
+      rsi_ui:null, sharpe_ui:null, iv_rank_ui:null, iv_pct_ui:null, alertCount:0
     }));
 
     // sectors
@@ -275,10 +296,10 @@
     applyFilters(); render();
   }
 
-  // ── events ───────────────────────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
     $('q').addEventListener('input', () => { applyFilters(); render(); });
     $('sector').addEventListener('change', () => { applyFilters(); render(); });
+    $('alertFilter').addEventListener('change', () => { applyFilters(); render(); });
     $('sort').addEventListener('change', () => { applyFilters(); render(); });
     $('dir').addEventListener('change', () => { applyFilters(); render(); });
 
